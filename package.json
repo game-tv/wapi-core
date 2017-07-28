@@ -5,6 +5,9 @@
   "main": "index.js",
   "repository": "git@github.com:weeb-services/wapi-core.git",
   "author": "TheAkio <me@theak.io>",
+  "contributors": [
+    "Wolke <wolke@weeb.sh>"
+  ],
   "license": "MIT",
   "dependencies": {
     "express": "^4.15.3",
