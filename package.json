@@ -1,0 +1,13 @@
+{
+  "name": "wapi-core",
+  "version": "1.0.0",
+  "description": "Weeb API core",
+  "main": "index.js",
+  "repository": "git@github.com:weeb-services/wapi-core.git",
+  "author": "TheAkio <me@theak.io>",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.15.3",
+    "winston": "^2.3.1"
+  }
+}
