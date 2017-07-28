@@ -6,9 +6,9 @@ The core module of all cute weeb apis
 
 1. Install via yarn (or npm if u are a pleb)
 ```
-yarn add git+ssh://git@github.com:weeb-services/wapi-core.git
+yarn add git+https://github.com/weeb-services/wapi-core.git
 
-npm i git+ssh://git@github.com:weeb-services/wapi-core.git
+npm i git+https://github.com/weeb-services/wapi-core.git
 ```
 2. Require the module and use its stuff
 ```js
