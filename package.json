@@ -11,6 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "express": "^4.15.3",
+    "superagent": "^3.5.2",
     "winston": "^2.3.1"
   }
 }
