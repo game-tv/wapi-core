@@ -1,8 +1,11 @@
 {
   "name": "wapi-core",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Weeb API core",
   "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
   "repository": "git@github.com:weeb-services/wapi-core.git",
   "author": "TheAkio <me@theak.io>",
   "contributors": [
