@@ -1,6 +1,6 @@
 {
   "name": "wapi-core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Weeb API core",
   "main": "index.js",
   "repository": "git@github.com:weeb-services/wapi-core.git",
