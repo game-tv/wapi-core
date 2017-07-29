@@ -3,7 +3,7 @@
 const BaseTest = require('./base.test');
 
 const express = require('express');
-const superagent = require('superagent');
+const axios = require('axios');
 const AccountAPIMiddleware = require('../lib/middleware/accountapi.middleware');
 
 class AccountAPIMiddlewareTest extends BaseTest {
@@ -30,15 +30,15 @@ class AccountAPIMiddlewareTest extends BaseTest {
                 app.use(new AccountAPIMiddleware('http://localhost:12010').middleware());
                 app.use('*', (req, res) => res.status(200).json({ status: 200, message: 'Authorized', account: req.account }));
                 let server = app.listen(12011, 'localhost', () => {
-                    superagent
-                    .get(`http://localhost:12011`)
-                    .set('Content-Type', 'application/json')
-                    .set('Authorization', `Bearer ${token}`)
-                    .send()
+                    axios({
+                        url: `http://localhost:12011`,
+                        method: 'get',
+                        headers: {Authorization: `Bearer ${token}`},
+                    })
                     .then(response => {
                         apiServer.close();
                         server.close();
-                        if (response.body && response.body.status === 200 && response.body.message === 'Authorized' && response.body.account) resolve();
+                        if (response.data && response.data.status === 200 && response.data.message === 'Authorized' && response.data.account) resolve();
                         reject(Error('Unexpected response or no account'));
                     })
                     .catch(e => {
