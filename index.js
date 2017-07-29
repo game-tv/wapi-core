@@ -19,3 +19,4 @@ module.exports.WildcardRouter = require('./lib/routers/wildcard.router');
 
 // Other stuff
 module.exports.Constants = require('./lib/constants');
+module.exports.Utils = require('/lib/utils');
