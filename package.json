@@ -1,6 +1,6 @@
 {
   "name": "wapi-core",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Weeb API core",
   "main": "index.js",
   "scripts": {
