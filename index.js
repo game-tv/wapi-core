@@ -11,6 +11,7 @@ winston.add(winston.transports.Console, {
 // Middleware
 module.exports.BaseMiddleware = require('./lib/middleware/base.middleware');
 module.exports.AccountAPIMiddleware = require('./lib/middleware/accountapi.middleware');
+module.exports.PermMiddleware = require('./lib/middleware/perm.middleware');
 
 // Routers
 module.exports.BaseRouter = require('./lib/routers/base.router');
