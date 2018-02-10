@@ -1,13 +1,13 @@
-'use strict';
+'use strict'
 
 class BaseTest {
-    constructor(name) {
-        this.name = name;
-    }
+  constructor (name) {
+    this.name = name
+  }
 
-    async run() {
-        throw new Error('Test run function not overridden.');
-    }
+  async run () {
+    throw new Error('Test run function not overridden.')
+  }
 }
 
-module.exports = BaseTest;
+module.exports = BaseTest
