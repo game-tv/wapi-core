@@ -1,6 +1,6 @@
 {
   "name": "@weeb_services/wapi-core",
-  "version": "1.4.1-alpha2",
+  "version": "1.4.1-alpha4",
   "description": "Weeb API core",
   "main": "index.js",
   "private": false,
@@ -19,21 +19,22 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.17.1",
-    "express": "^4.15.3",
+    "axios": "^0.18.0",
+    "express": "^4.16.3",
+    "shortid": "^2.2.8",
     "universal-analytics": "^0.4.16",
     "url-pattern": "^1.0.3",
-    "winston": "^2.3.1"
+    "winston": "^3.0.0-rc2"
   },
   "engines": {
     "node": ">=7.6.0"
   },
   "devDependencies": {
-    "eslint": "^4.17.0",
-    "eslint-config-standard": "^11.0.0-beta.0",
-    "eslint-plugin-import": "^2.8.0",
-    "eslint-plugin-node": "^6.0.0",
-    "eslint-plugin-promise": "^3.6.0",
+    "eslint": "^4.18.2",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.7.0",
     "eslint-plugin-standard": "^3.0.1"
   },
   "bugs": {
