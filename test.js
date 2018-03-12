@@ -1,10 +1,5 @@
-// Set up winston
-const winston = require('winston')
-winston.remove(winston.transports.Console)
-winston.add(winston.transports.Console, {
-  timestamp: true,
-  colorize: true,
-})
+// Set up logger
+const logger = require('./index').Logger
 
 try {
   const pkg = require('./package.json')
@@ -15,9 +10,9 @@ try {
   for (let i = 0; i < files.length; i++) {
     if (files[i] !== 'base.test.js') tests.push(require(`./tests/${files[i]}`))
   }
-  winston.info('Tests loaded.')
+  logger.info('Tests loaded.')
 
-  winston.info(`Testing wapi-core@${pkg.version}`)
+  logger.info(`Testing wapi-core@${pkg.version}`)
 
   let successful = 0
   let failed = 0
@@ -25,24 +20,24 @@ try {
   const runTests = async () => {
     for (let i = 0; i < tests.length; i++) {
       const test = new tests[i]()
-      winston.info(`Running test for ${test.name}`)
+      logger.info(`Running test for ${test.name}`)
       try {
         await test.run()
         successful++
       } catch (e) {
         failed++
-        return winston.error(`Test failed: ${e}`)
+        return logger.error(`Test failed: ${e}`)
       }
     }
   }
 
   runTests()
     .then(() => {
-      winston.info(`Done. Completed ${successful} test(s) successfully, failed ${failed} test(s).`)
+      logger.info(`Done. Completed ${successful} test(s) successfully, failed ${failed} test(s).`)
     })
     .catch(e => {
-      winston.error(`Failed to run tests: ${e}`)
+      logger.error(`Failed to run tests: ${e}`)
     })
 } catch (e) {
-  winston.error(`Failed to run tests: ${e}`)
+  logger.error(`Failed to run tests: ${e}`)
 }
