@@ -19,3 +19,5 @@ module.exports.Registrator = require('./lib/registrator')
 module.exports.Errors = {
   HttpError: require('./lib/structures/errors/HttpError'),
 }
+
+module.exports.ShutdownHandler = require('./lib/shutdownHandler')
