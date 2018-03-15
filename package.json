@@ -1,6 +1,6 @@
 {
   "name": "@weeb_services/wapi-core",
-  "version": "1.4.1-alpha7",
+  "version": "1.4.1-alpha8",
   "description": "Weeb API core",
   "main": "index.js",
   "private": false,
