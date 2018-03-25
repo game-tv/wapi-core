@@ -6,11 +6,9 @@ Utility module for weeb.sh apis
 
 ## How to use it:
 
-1. Install via yarn (or npm if u are a pleb)
+1. Install via yarn (does not work yet with npm)
 ```
 yarn add @weeb_services/wapi-core
-
-npm i @weeb_services/wapi-core
 ```
 2. Require the module and use its stuff
 ```js
