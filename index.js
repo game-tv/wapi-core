@@ -8,7 +8,7 @@ module.exports.TrackingMiddleware = require('./lib/middleware/tracking.middlewar
 
 // Routers
 module.exports.BaseRouter = require('./lib/routers/base.router')
-module.exports.BaseTwoRounter = require('./lib/routers/basetwo.router');
+module.exports.BaseTwoRouter = require('./lib/routers/basetwo.router');
 module.exports.GenericRouter = require('./lib/routers/generic.router')
 module.exports.WildcardRouter = require('./lib/routers/wildcard.router')
 
