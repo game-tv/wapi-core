@@ -1,7 +1,33 @@
 {
-  "extends": "standard",
-  "rules": {
-    "no-var": "error",
-    "prefer-const": "error"
-  }
+	"extends": "xo",
+	"parserOptions": {
+		"ecmaVersion": 8
+	},
+	"env": {
+		"es6": true,
+		"node": true
+	},
+	"rules": {
+		"object-curly-spacing": [
+			"error",
+			"always"
+		],
+		"eqeqeq": [
+			"error",
+			"allow-null"
+		],
+		"no-eq-null": [
+			"off"	
+		],
+		"comma-dangle": [
+			"error",
+			"always-multiline"
+		],
+		"prefer-const": [
+			"error"
+		],
+		"no-var": [
+			"error"
+		]
+	}
 }
