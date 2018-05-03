@@ -7,6 +7,9 @@ const WeebAPI = require('../WeebAPI');
 
 class Registrator {
 	constructor() {
+		if (!WeebAPI.initialized) {
+			throw new Error('Initialize the WeebAPI class to use the registrator');
+		}
 		if (!WeebAPI.get('config').registration) {
 			throw new Error('Invalid configuration: config.registration does not exist');
 		}
@@ -21,10 +24,6 @@ class Registrator {
 	}
 
 	async register() {
-		if (!WeebAPI.initialized) {
-			throw new Error('Initialize the WeebAPI class to use this method');
-		}
-
 		return this.agent.put('/agent/service/register', { name: WeebAPI.get('serviceName'), id: `${WeebAPI.get('serviceName')}-${this.id}`, tags: [WeebAPI.get('config').env], port: WeebAPI.get('config').port, checks: WeebAPI.get('config').registration.checks });
 	}
 

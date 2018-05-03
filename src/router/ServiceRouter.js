@@ -13,11 +13,11 @@ class ServiceRouter extends Router {
 		const routes = [];
 
 		const info = new Route('ALL', '/', [], false);
-		info.call = () => ({ version: WeebAPI.pkg.version, message: `Welcome to the ${WeebAPI.pkg.name} API` });
+		info.call = () => ({ version: WeebAPI.get('version'), message: `Welcome to the ${WeebAPI.get('name')} API` });
 		routes.push(info);
-		if (WeebAPI.permNodes) {
+		if (WeebAPI.get('permNodes')) {
 			const permnode = new Route('ALL', '/permnode', [], false);
-			permnode.call = () => ({ apiIdentifier: `${WeebAPI.pkg.name}-${WeebAPI.config.env}`, permNodes: WeebAPI.permNodes });
+			permnode.call = () => ({ apiIdentifier: `${WeebAPI.get('name')}-${WeebAPI.get('config').env}`, permNodes: WeebAPI.get('permNodes') });
 			routes.push(permnode);
 		}
 
