@@ -25,7 +25,9 @@
 		"shortid": "^2.2.8",
 		"universal-analytics": "^0.4.16",
 		"url-pattern": "^1.0.3",
-		"winston": "^3.0.0-rc2"
+		"winston": "^3.0.0-rc5",
+		"body-parser": "^1.18.2",
+		"cors": "^2.8.4"
 	},
 	"engines": {
 		"node": ">=8.0.0"

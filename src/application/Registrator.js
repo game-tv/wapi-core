@@ -6,25 +6,30 @@ const shortid = require('shortid');
 const WeebAPI = require('../WeebAPI');
 
 class Registrator {
-	constructor(host, aclToken) {
-		const headers = {};
-		if (aclToken) {
-			headers['X-Consul-Token'] = aclToken;
+	constructor() {
+		if (!WeebAPI.get('config').registration) {
+			throw new Error('Invalid configuration: config.registration does not exist');
 		}
-		this.agent = axios.create({ baseURL: `http://${host}/v1/`, headers });
+
+		const headers = {};
+
+		if (WeebAPI.get('config').registration.token) {
+			headers['X-Consul-Token'] = WeebAPI.get('config').registration.token;
+		}
+		this.agent = axios.create({ baseURL: `http://${WeebAPI.get('config').registration.host}/v1/`, headers });
 		this.id = shortid.generate();
 	}
 
-	async register(checks) {
+	async register() {
 		if (!WeebAPI.initialized) {
 			throw new Error('Initialize the WeebAPI class to use this method');
 		}
 
-		return this.agent.put('/agent/service/register', { name: WeebAPI.pkg.serviceName, id: `${WeebAPI.pkg.serviceName}-${this.id}`, tags: [WeebAPI.config.env], port: WeebAPI.config.port, checks });
+		return this.agent.put('/agent/service/register', { name: WeebAPI.get('serviceName'), id: `${WeebAPI.get('serviceName')}-${this.id}`, tags: [WeebAPI.get('config').env], port: WeebAPI.get('config').port, checks: WeebAPI.get('config').registration.checks });
 	}
 
 	async unregister() {
-		return this.agent.put(`/agent/service/deregister/${WeebAPI.pkg.serviceName}-${this.id}`);
+		return this.agent.put(`/agent/service/deregister/${WeebAPI.get('serviceName')}-${this.id}`);
 	}
 }
 

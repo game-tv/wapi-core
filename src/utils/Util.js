@@ -1,6 +1,20 @@
 'use strict';
 
 class Util {
+	static configureWinston(winston) {
+		winston.configure({
+			transports: [
+				new winston.transports.Console(),
+			],
+			format: winston.format.combine(
+				winston.format.colorize(),
+				winston.format.timestamp(),
+				winston.format.align(),
+				winston.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`),
+			),
+		});
+	}
+
 	static checkScopes(wantedScope, scopes) {
 		if (scopes.indexOf('admin' > -1)) {
 			return true;

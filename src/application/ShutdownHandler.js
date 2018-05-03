@@ -4,19 +4,20 @@ const winston = require('winston');
 
 const GracefulShutdownManager = require('@moebius/http-graceful-shutdown').GracefulShutdownManager;
 
+const WeebAPI = require('../WeebAPI');
+
 class ShutdownHandler {
-	constructor(server, registrator, mongoose, name) {
+	constructor(server, registrator, mongoose) {
 		if (server) {
 			this.gsm = new GracefulShutdownManager(server);
 		}
 		this.registrator = registrator;
 		this.mongoose = mongoose;
-		this.name = name;
 		this.errors = [];
 	}
 
 	shutdown() {
-		if (this.registrator && this.name) {
+		if (this.registrator && WeebAPI.get('serviceName')) {
 			return this._unregister(() => {
 				this.registrator = null;
 				this.shutdown();
@@ -36,32 +37,31 @@ class ShutdownHandler {
 		}
 		if (this.errors.length > 0) {
 			for (const error of this.errors) {
-				logger.error(error)
+				winston.error(error);
 			}
-			process.exit(1)
+			process.exit(1);
 		} else {
-			process.exit(0)
+			process.exit(0);
 		}
 	}
 
 	_stopWebserver(cb) {
-		this.gsm.terminate(() => cb())
+		this.gsm.terminate(() => cb());
 	}
 
 	_stopMongoose(cb) {
-		this.mongoose.connection.close(() => cb())
+		this.mongoose.connection.close(() => cb());
 	}
 
 	_unregister(cb) {
-		this.registrator.unregister(this.name)
+		this.registrator.unregister(WeebAPI.get('serviceName'))
 			.then(() => {
-				cb()
-			})
-			.catch((e) => {
-				this.errors.push(e)
-				cb()
-			})
+				cb();
+			}).catch(e => {
+				this.errors.push(e);
+				cb();
+			});
 	}
 }
 
-module.exports = shutdownHandler;
+module.exports = ShutdownHandler;
