@@ -14,7 +14,7 @@ npm i @weeb_services/wapi-core
 ```
 2. Create an index.js with the following code
 ```js
-const { WeebAPI } require('@weeb_services/wapi-core');
+const { WeebAPI } = require('@weeb_services/wapi-core');
 
 class YourAPI extends WeebAPI {
 	async onLoad() {
@@ -40,7 +40,7 @@ class YourAPI extends WeebAPI {
 
 new YourAPI().init();
 ```
-3. Create a main.json in a folder called "config"
+3. Create a folder called "config" in your project root and put a file called "main.json" into that with the following contents
 ```json
 {
 	"host": "127.0.0.1",
