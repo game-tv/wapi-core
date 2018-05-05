@@ -3,6 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 
+const Async = require('./Async');
+
 class Require {
 	static recursive(directory) {
 		const dirList = fs.readdirSync(path.resolve(directory));
@@ -21,6 +23,12 @@ class Require {
 		}
 
 		return modules;
+	}
+
+	static async asyncJSON(file) {
+		const absolute = path.resolve(file);
+		const data = await Async.readFile(absolute, 'utf8');
+		return JSON.parse(data);
 	}
 }
 

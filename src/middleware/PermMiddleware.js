@@ -1,16 +1,15 @@
 'use strict';
 
-const WeebAPI = require('../WeebAPI');
 const Middleware = require('./Middleware');
 const { HTTPCodes } = require('../Constants');
 
 class PermMiddleware extends Middleware {
-	constructor(errorHandler) {
-		if (!WeebAPI.initialized) {
-			throw new Error('Cannot instantiate PermMiddleware without initialized WeebAPI class');
+	constructor(weebApi, errorHandler) {
+		if (!weebApi.loaded) {
+			throw new Error('Cannot instantiate PermMiddleware without loaded WeebAPI class');
 		}
 
-		const scopeKey = `${WeebAPI.get('name')}-${WeebAPI.get('config').env}`;
+		const scopeKey = `${weebApi.get('name')}-${weebApi.get('config').env}`;
 
 		super('PermMiddleware', errorHandler, async req => {
 			if (!req.account) {
