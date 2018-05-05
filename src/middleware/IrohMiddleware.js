@@ -7,7 +7,7 @@ const { HTTPCodes } = require('../Constants');
 
 class IrohMiddleware extends Middleware {
 	constructor(weebApi, errorHandler) {
-		if (weebApi.loaded) {
+		if (!weebApi.loaded) {
 			throw new Error('Cannot instantiate IrohMiddleware without loaded WeebAPI class');
 		}
 
