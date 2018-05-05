@@ -9,7 +9,7 @@ class PermMiddleware extends Middleware {
 			throw new Error('Cannot instantiate PermMiddleware without loaded WeebAPI class');
 		}
 
-		const scopeKey = `${weebApi.get('name')}-${weebApi.get('config').env}`;
+		const scopeKey = `${weebApi.get('name')}-${weebApi.get('env')}`;
 
 		super('PermMiddleware', errorHandler, async req => {
 			if (!req.account) {

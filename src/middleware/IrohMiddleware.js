@@ -11,8 +11,8 @@ class IrohMiddleware extends Middleware {
 			throw new Error('Cannot instantiate IrohMiddleware without loaded WeebAPI class');
 		}
 
-		const urlBase = weebApi.get('config').irohHost || 'http://localhost:9010';
-		const uagent = weebApi.get('uagent') || `${weebApi.get('name')}-${weebApi.get('config').env}`;
+		const urlBase = weebApi.get('irohHost');
+		const uagent = weebApi.get('uagent') || `${weebApi.get('name')}-${weebApi.get('env')}`;
 
 		super('IrohMiddleware', errorHandler, async req => {
 			if (!req.headers || !req.headers.authorization) {
@@ -54,7 +54,7 @@ class IrohMiddleware extends Middleware {
 			return HTTPCodes.OK;
 		});
 
-		const whitelist = weebApi.get('config').whitelist;
+		const whitelist = weebApi.get('whitelist');
 		if (whitelist && whitelist.length > 0) {
 			for (let i = 0; i < whitelist.length; i++) {
 				this.whitelist(whitelist[i].path, whitelist[i].method);

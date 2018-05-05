@@ -29,6 +29,7 @@ class WeebAPI {
 		this._mongoose = null;
 	}
 
+	// eslint-disable-next-line complexity
 	async init() {
 		if (this.initialized) {
 			return;
@@ -68,9 +69,17 @@ class WeebAPI {
 
 			data.set('name', pkg.name);
 			data.set('version', pkg.version);
-			data.set('serviceName', pkg.serviceName);
-			data.set('config', config);
-			data.set('permNodes', permNodes);
+			data.set('serviceName', pkg.serviceName || null);
+			data.set('host', config.host || '127.0.0.1');
+			data.set('port', config.port || 8080);
+			data.set('env', config.env || 'development');
+			// TODO Remove config.ravenKey in the future
+			data.set('sentry', config.sentry || config.ravenKey || null);
+			data.set('track', config.track || null);
+			data.set('irohHost', config.irohHost || 'http://localhost:9010');
+			data.set('registration', config.registration || {});
+			data.set('whitelist', config.whitelist || []);
+			data.set('permNodes', permNodes || null);
 
 			this._data = data;
 			this._loaded = true;
@@ -79,9 +88,9 @@ class WeebAPI {
 			await this.onLoaded();
 
 			// Register error reporting
-			const useSentry = this.get('config').ravenKey && this.get('config').ravenKey !== '' && this.get('config').env !== 'development';
+			const useSentry = this.get('sentry') && this.get('sentry') !== '' && this.get('env') !== 'development';
 			if (useSentry) {
-				Raven.config(this.get('config').ravenKey, { release: this.get('version'), environment: this.get('config').env, captureUnhandledRejections: true })
+				Raven.config(this.get('sentry'), { release: this.get('version'), environment: this.get('env'), captureUnhandledRejections: true })
 					.install((err, sendErr, eventId) => {
 						if (!sendErr) {
 							winston.info('Successfully sent fatal error with eventId ' + eventId + ' to Sentry:');
@@ -97,7 +106,7 @@ class WeebAPI {
 			}
 
 			// Do startup
-			if (this.get('config').registration && this.get('config').registration.enabled) {
+			if (this.get('registration').enabled) {
 				this._registrator = new Registrator(this);
 			}
 
@@ -120,7 +129,7 @@ class WeebAPI {
 
 			// WeebAPI middlewares
 			new IrohMiddleware(this, this.onError.bind(this)).register(app);
-			if (this.get('config').track) {
+			if (this.get('track')) {
 				new TrackMiddleware(this, this.onError.bind(this)).register(app);
 			}
 			new PermMiddleware(this, this.onError.bind(this)).register(app);
@@ -138,8 +147,8 @@ class WeebAPI {
 			new WildcardRouter(this.onError.bind(this)).register(app);
 
 			// Start express
-			this._server = app.listen(this.get('config').port, this.get('config').host);
-			winston.info(`Server started on ${this.get('config').host}:${this.get('config').port}`);
+			this._server = app.listen(this.get('port'), this.get('host'));
+			winston.info(`Server started on ${this.get('host')}:${this.get('port')}`);
 
 			// Register as network service if we have a registrator
 			if (this._registrator) {

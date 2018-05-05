@@ -27,13 +27,13 @@ class TrackMiddleware extends Middleware {
 				uid = req.account.id;
 			}
 
-			const visitor = ua(weebApi.get('config').track, { https: true });
+			const visitor = ua(weebApi.get('track'), { https: true });
 			const trackingData = {
 				uid,
 				uip: ip,
 				ua: req.headers['user-agent'],
 				dl: fullUrl,
-				an: `${weebApi.get('name')}_${weebApi.get('config').env}`,
+				an: `${weebApi.get('name')}_${weebApi.get('env')}`,
 				av: weebApi.get('version'),
 			};
 			if (req.account) {

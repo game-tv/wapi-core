@@ -9,16 +9,13 @@ class Registrator {
 		if (!weebApi.loaded) {
 			throw new Error('Initialize the WeebAPI class to use the registrator');
 		}
-		if (!weebApi.get('config').registration) {
-			throw new Error('Invalid configuration: config.registration does not exist');
-		}
 
 		const headers = {};
 
-		if (weebApi.get('config').registration.token) {
-			headers['X-Consul-Token'] = weebApi.get('config').registration.token;
+		if (weebApi.get('registration').token) {
+			headers['X-Consul-Token'] = weebApi.get('registration').token;
 		}
-		this.agent = axios.create({ baseURL: `http://${weebApi.get('config').registration.host}/v1/`, headers });
+		this.agent = axios.create({ baseURL: `http://${weebApi.get('registration').host}/v1/`, headers });
 		this.id = shortid.generate();
 	}
 
@@ -26,9 +23,9 @@ class Registrator {
 		return this.agent.put('/agent/service/register', {
 			name: this._weebApi.get('serviceName'),
 			id: `${this._weebApi.get('serviceName')}-${this.id}`,
-			tags: [this._weebApi.get('config').env],
-			port: this._weebApi.get('config').port,
-			checks: this._weebApi.get('config').registration.checks,
+			tags: [this._weebApi.get('env')],
+			port: this._weebApi.get('port'),
+			checks: this._weebApi.get('registration').checks,
 		});
 	}
 

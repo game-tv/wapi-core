@@ -16,7 +16,7 @@ class ServiceRouter extends Router {
 		routes.push(info);
 		if (weebApi.get('permNodes')) {
 			const permnode = new Route('ALL', '/permnode', [], false);
-			permnode.call = () => ({ apiIdentifier: `${weebApi.get('name')}-${weebApi.get('config').env}`, permNodes: weebApi.get('permNodes') });
+			permnode.call = () => ({ apiIdentifier: `${weebApi.get('name')}-${weebApi.get('env')}`, permNodes: weebApi.get('permNodes') });
 			routes.push(permnode);
 		}
 
