@@ -13,13 +13,14 @@ const Require = require('./utils/Require');
 const Registrator = require('./Registrator');
 const IrohMiddleware = require('./middleware/IrohMiddleware');
 const PermMiddleware = require('./middleware/PermMiddleware');
+const TrackMiddleware = require('./middleware/TrackMiddleware');
 const ServiceRouter = require('./router/ServiceRouter');
 const WildcardRouter = require('./router/WildcardRouter');
 const { HTTPCodes } = require('./Constants');
 
 class WeebAPI {
 	constructor() {
-		this._data = new Map();
+		this._data = null;
 		this._loaded = false;
 		this._initialized = false;
 
@@ -102,7 +103,8 @@ class WeebAPI {
 
 			// Initialize express
 			const app = express();
-			// Register some middleware
+
+			// Register some middlewares
 			app.use(bodyParser.json());
 			app.use(bodyParser.urlencoded({ extended: true }));
 			app.use(cors());
@@ -118,12 +120,9 @@ class WeebAPI {
 
 			// WeebAPI middlewares
 			new IrohMiddleware(this, this.onError.bind(this)).register(app);
-
-			// TODO
-			/* If (WeebAPI.get('config').track) {
-				app.use(new TrackMiddleware(WeebAPI.pkg.name, WeebAPI.pkg.version, WeebAPI.get('config').env, WeebAPI.get('config').track).middleware());
-			} */
-
+			if (this.get('config').track) {
+				new TrackMiddleware(this, this.onError.bind(this)).register(app);
+			}
 			new PermMiddleware(this, this.onError.bind(this)).register(app);
 
 			// User middlewares
@@ -166,23 +165,27 @@ class WeebAPI {
 	 * This has a default handler but can be overridden if wanted
 	 *
 	 * @param {Error} error The error
-	 * @param {Express.Request} req The current request
-	 * @param {Express.Response} res The current response
+	 * @param {Express.Request=} req The current request
+	 * @param {Express.Response=} res The current response
 	 */
 	onError(error, req, res) {
 		try {
-			if (req.Raven) {
-				// TODO helper.trackErrorRaven(req.Raven, e, { req, user: req.account });
+			if (req && req.Raven) {
+				Raven.captureException(error, err => {
+					winston.error(err);
+				});
 			}
 			winston.error(error);
 		} catch (e) {
 			// Ignore
 		}
 
-		res.status(HTTPCodes.INTERNAL_SERVER_ERROR).json({
-			status: HTTPCodes.INTERNAL_SERVER_ERROR,
-			message: 'Internal Server Error',
-		});
+		if (res) {
+			res.status(HTTPCodes.INTERNAL_SERVER_ERROR).json({
+				status: HTTPCodes.INTERNAL_SERVER_ERROR,
+				message: 'Internal Server Error',
+			});
+		}
 	}
 
 	/**
