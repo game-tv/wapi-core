@@ -1,7 +1,7 @@
 {
 	"name": "@weeb_services/wapi-core",
 	"version": "2.0.0",
-	"description": "Weeb API core",
+	"description": "Core module for weeb.sh APIs",
 	"main": "src/index.js",
 	"private": false,
 	"scripts": {
