@@ -20,7 +20,17 @@ const WildcardRouter = require('./router/WildcardRouter');
 const { HTTPCodes } = require('./Constants');
 
 class WeebAPI {
-	constructor() {
+	/**
+	 * Creates a new WeebAPI
+	 *
+	 * @param {object} config The configuration
+	 * @param {boolean} config.enableAccounts Enables or disables accounts and perm checking, default: enabled
+	 */
+	constructor(config) {
+		this._config = Object.assign({
+			enableAccounts: true,
+		}, config);
+
 		this._data = null;
 		this._loaded = false;
 		this._initialized = false;
@@ -143,6 +153,10 @@ class WeebAPI {
 		return this._initialized;
 	}
 
+	get accountsEnabled() {
+		return this._config.enableAccounts;
+	}
+
 	shutdown(errors) {
 		errors = errors || [];
 
@@ -192,18 +206,26 @@ class WeebAPI {
 		// Config middleware
 		app.use((req, res, next) => {
 			req.weebApi = this;
-			// TODO Deprecate req.Raven
-			req.Raven = this._sentry;
-			req.Sentry = this._sentry;
+			Object.defineProperty(req, 'Raven', {
+				get: () => {
+					winston.warn('Using req.Raven is deprecated and will be removed in the future! Use req.sentry instead.');
+					return this._sentry;
+				},
+			});
+			req.sentry = this._sentry;
 			next();
 		});
 
 		// WeebAPI middlewares
-		new IrohMiddleware(this, this.onError.bind(this)).register(app);
+		if (this._config.enableAccounts) {
+			new IrohMiddleware(this, this.onError.bind(this)).register(app);
+		}
 		if (this.get('track')) {
 			new TrackMiddleware(this, this.onError.bind(this)).register(app);
 		}
-		new PermMiddleware(this, this.onError.bind(this)).register(app);
+		if (this._config.enableAccounts) {
+			new PermMiddleware(this, this.onError.bind(this)).register(app);
+		}
 
 		// User middlewares
 		await this.registerMiddlewares(app);
