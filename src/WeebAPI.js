@@ -10,11 +10,12 @@ const Raven = require('raven');
 const { GracefulShutdownManager } = require('@moebius/http-graceful-shutdown');
 
 const Require = require('./utils/Require');
-const Registrator = require('./Registrator');
+const Registrator = require('./utils/Registrator');
 const IrohMiddleware = require('./middleware/IrohMiddleware');
 const PermMiddleware = require('./middleware/PermMiddleware');
 const TrackMiddleware = require('./middleware/TrackMiddleware');
 const ServiceRouter = require('./router/ServiceRouter');
+const Sentry = require('./utils/Sentry');
 const WildcardRouter = require('./router/WildcardRouter');
 const { HTTPCodes } = require('./Constants');
 
@@ -27,9 +28,9 @@ class WeebAPI {
 		this._registrator = null;
 		this._server = null;
 		this._mongoose = null;
+		this._sentry = null;
 	}
 
-	// eslint-disable-next-line complexity
 	async init() {
 		if (this.initialized) {
 			return;
@@ -44,117 +45,15 @@ class WeebAPI {
 
 		try {
 			await this.onLoad();
-
-			// Load config
-			const data = new Map();
-
-			let pkg;
-			let config;
-			let permNodes;
-			try {
-				pkg = await Require.asyncJSON('package.json');
-			} catch (e) {
-				throw new Error('Failed to require package.json for Weeb API');
-			}
-			try {
-				config = await Require.asyncJSON('config/main.json');
-			} catch (e) {
-				throw new Error('Failed to require config/main.json for WeebAPI');
-			}
-			try {
-				permNodes = await Require.asyncJSON('permNodes.json');
-			} catch (e) {
-				winston.warn('Could not find permNodes.json! /permnode will not be available.');
-			}
-
-			data.set('name', pkg.name);
-			data.set('version', pkg.version);
-			data.set('serviceName', pkg.serviceName || null);
-			data.set('host', config.host || '127.0.0.1');
-			data.set('port', config.port || 8080);
-			data.set('env', config.env || 'development');
-			// TODO Remove config.ravenKey in the future
-			data.set('sentry', config.sentry || config.ravenKey || null);
-			data.set('track', config.track || null);
-			data.set('irohHost', config.irohHost || 'http://localhost:9010');
-			data.set('registration', config.registration || {});
-			data.set('whitelist', config.whitelist || []);
-			data.set('permNodes', permNodes || null);
-
-			this._data = data;
-			this._loaded = true;
-
-			winston.info('Config loaded.');
+			await this._loadConfig();
 			await this.onLoaded();
 
-			// Register error reporting
-			const useSentry = this.get('sentry') && this.get('sentry') !== '' && this.get('env') !== 'development';
-			if (useSentry) {
-				Raven.config(this.get('sentry'), { release: this.get('version'), environment: this.get('env'), captureUnhandledRejections: true })
-					.install((err, sendErr, eventId) => {
-						if (!sendErr) {
-							winston.info('Successfully sent fatal error with eventId ' + eventId + ' to Sentry:');
-							winston.error(err.stack);
-						}
-						winston.error(sendErr);
-						process.exit(1);
-					});
-				Raven.on('error', e => {
-					winston.error('Raven Error', e);
-				});
-				winston.info('Enabled Sentry');
-			}
+			this._sentry = new Sentry(this);
+			this._registrator = new Registrator(this);
 
-			// Do startup
-			if (this.get('registration').enabled) {
-				this._registrator = new Registrator(this);
-			}
+			await this._startExpress();
 
-			// Initialize express
-			const app = express();
-
-			// Register some middlewares
-			app.use(bodyParser.json());
-			app.use(bodyParser.urlencoded({ extended: true }));
-			app.use(cors());
-
-			// Config middleware
-			app.use((req, res, next) => {
-				req.weebApi = this;
-				if (useSentry) {
-					req.Raven = Raven;
-				}
-				next();
-			});
-
-			// WeebAPI middlewares
-			new IrohMiddleware(this, this.onError.bind(this)).register(app);
-			if (this.get('track')) {
-				new TrackMiddleware(this, this.onError.bind(this)).register(app);
-			}
-			new PermMiddleware(this, this.onError.bind(this)).register(app);
-
-			// User middlewares
-			await this.registerMiddlewares(app);
-
-			// WeebAPI routers
-			new ServiceRouter(this, this.onError.bind(this)).register(app);
-
-			// User routers
-			await this.registerRouters(app);
-
-			// Wildcard router comes last
-			new WildcardRouter(this.onError.bind(this)).register(app);
-
-			// Start express
-			this._server = app.listen(this.get('port'), this.get('host'));
-			winston.info(`Server started on ${this.get('host')}:${this.get('port')}`);
-
-			// Register as network service if we have a registrator
-			if (this._registrator) {
-				await this._registrator.register();
-				winston.info(`Registered network service`);
-			}
+			await this._registrator.register();
 
 			this._initialized = true;
 			await this.onInitialized();
@@ -248,7 +147,7 @@ class WeebAPI {
 		errors = errors || [];
 
 		if (this._registrator && this.get('serviceName')) {
-			return this.registrator.unregister(this.get('serviceName'))
+			return this._registrator.unregister(this.get('serviceName'))
 				.then(() => {
 					this._registrator = null;
 					this.shutdown(errors);
@@ -279,6 +178,109 @@ class WeebAPI {
 		} else {
 			process.exit(0);
 		}
+	}
+
+	async _startExpress() {
+		// Initialize express
+		const app = express();
+
+		// Register some middlewares
+		app.use(bodyParser.json());
+		app.use(bodyParser.urlencoded({ extended: true }));
+		app.use(cors());
+
+		// Config middleware
+		app.use((req, res, next) => {
+			req.weebApi = this;
+			// TODO Deprecate req.Raven
+			req.Raven = this._sentry;
+			req.Sentry = this._sentry;
+			next();
+		});
+
+		// WeebAPI middlewares
+		new IrohMiddleware(this, this.onError.bind(this)).register(app);
+		if (this.get('track')) {
+			new TrackMiddleware(this, this.onError.bind(this)).register(app);
+		}
+		new PermMiddleware(this, this.onError.bind(this)).register(app);
+
+		// User middlewares
+		await this.registerMiddlewares(app);
+
+		// WeebAPI routers
+		new ServiceRouter(this, this.onError.bind(this)).register(app);
+
+		// User routers
+		await this.registerRouters(app);
+
+		// Wildcard router comes last
+		new WildcardRouter(this.onError.bind(this)).register(app);
+
+		// Start express
+		this._server = app.listen(this.get('port'), this.get('host'));
+		winston.info(`Server started on ${this.get('host')}:${this.get('port')}`);
+	}
+
+	async _loadConfig() {
+		const data = new Map();
+
+		await this._loadPackage(data);
+		await this._loadMainCfg(data);
+		await this._loadPermNodes(data);
+
+		this._data = data;
+		this._loaded = true;
+		winston.info('Config loaded');
+	}
+
+	async _loadPackage(data) {
+		let pkg;
+		try {
+			pkg = await Require.asyncJSON('package.json');
+		} catch (e) {
+			throw new Error('Failed to require package.json for Weeb API');
+		}
+
+		data.set('name', pkg.name);
+		data.set('version', pkg.version);
+		data.set('serviceName', pkg.serviceName || null);
+
+		return data;
+	}
+
+	async _loadMainCfg(data) {
+		let config;
+		try {
+			config = await Require.asyncJSON('config/main.json');
+		} catch (e) {
+			throw new Error('Failed to require config/main.json for WeebAPI');
+		}
+
+		data.set('host', config.host || '127.0.0.1');
+		data.set('port', config.port || 8080);
+		data.set('env', config.env || 'development');
+		// TODO Remove config.ravenKey in the future
+		data.set('sentry', config.sentry || config.ravenKey || null);
+		data.set('track', config.track || null);
+		data.set('irohHost', config.irohHost || 'http://localhost:9010');
+		data.set('registration', config.registration || {});
+		data.set('whitelist', config.whitelist || []);
+
+		return data;
+	}
+
+	async _loadPermNodes(data) {
+		let permNodes;
+		try {
+			permNodes = await Require.asyncJSON('permNodes.json');
+		} catch (e) {
+			winston.warn('Could not find permNodes.json! /permnode will not be available.');
+		}
+
+		data.set('permNodes', permNodes || null);
+
+		return data;
 	}
 }
 

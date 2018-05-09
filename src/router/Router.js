@@ -17,48 +17,34 @@ class Router {
 	 */
 	constructor(name, routes, errorHandler) {
 		this._name = name;
+		this._routes = routes;
 		this._router = new ExpressRouter();
 
 		// Check for error handler, otherwise use default one
 		if (!errorHandler || typeof errorHandler !== 'function') {
-			errorHandler = (error, req, res) => {
-				try {
-					winston.error(error);
-				} catch (e) {
-					// Ignore
-				}
-
-				const response = Util.getResponse(HTTPCodes.INTERNAL_SERVER_ERROR);
-				res.status(response.status).json(response);
-			};
+			errorHandler = Util.getDefaultErrorHandler();
 		}
+		this._errorHandler = errorHandler;
 
-		// Function for wrapping a route
-		const wrapRoute = (route, alias) => {
-			return async (req, res) => {
-				try {
-					// Permission check and abort if no perms
-					if (!Util.checkPermissions(req.account, route.permissions, route.requireAccount)) {
-						return res.status(HTTPCodes.FORBIDDEN).json(Util.buildMissingScopeMessage(
-							req.appName || 'unset',
-							req.config ? req.config.env : 'unset',
-							route.permissions,
-						));
-					}
+		this._init();
+	}
 
-					// Forward call and handle its response
-					const routeRes = await route.call(req, res, alias);
-					if (routeRes) {
-						const response = Util.getResponse(routeRes);
-						res.status(response.status).json(response);
-					}
-				} catch (e) {
-					errorHandler(e, req, res);
-				}
-			};
-		};
+	get name() {
+		return this._name;
+	}
 
-		for (let route of routes) {
+	/**
+	 * Registeres this router on an express app
+	 * @param {Express.Application} app The express app
+	 */
+	register(app) {
+		app.use(this._router);
+
+		winston.info(`Registered router "${this.name}"`);
+	}
+
+	_init() {
+		for (let route of this._routes) {
 			// Check if we have a class or an instance first
 			if (!(route instanceof Route)) {
 				// We have no Route instance so we're trying to instantiate it
@@ -87,25 +73,35 @@ class Router {
 				}
 
 				// Register
-				this._router[alias.method.toLowerCase()](alias.path, wrapRoute(route, alias));
+				this._router[alias.method.toLowerCase()](alias.path, this._wrapRoute(route, alias));
 
 				winston.info(`Registered route ${alias.method} ${alias.path} on router "${this.name}"`);
 			}
 		}
 	}
 
-	get name() {
-		return this._name;
-	}
+	_wrapRoute(route, alias) {
+		return async (req, res) => {
+			try {
+				// Permission check and abort if no perms
+				if (!Util.checkPermissions(req.account, route.permissions, route.requireAccount)) {
+					return res.status(HTTPCodes.FORBIDDEN).json(Util.buildMissingScopeMessage(
+						req.appName || 'unset',
+						req.config ? req.config.env : 'unset',
+						route.permissions,
+					));
+				}
 
-	/**
-	 * Registeres this router on an express app
-	 * @param {Express.Application} app The express app
-	 */
-	register(app) {
-		app.use(this._router);
-
-		winston.info(`Registered router "${this.name}"`);
+				// Forward call and handle its response
+				const routeRes = await route.call(req, res, alias);
+				if (routeRes) {
+					const response = Util.getResponse(routeRes);
+					res.status(response.status).json(response);
+				}
+			} catch (e) {
+				this._errorHandler(e, req, res);
+			}
+		};
 	}
 }
 

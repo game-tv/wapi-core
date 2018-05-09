@@ -1,6 +1,7 @@
 'use strict';
 
-const { Constants: { HTTPCodes, DefaultResponses } } = require('../Constants');
+const winston = require('winston');
+const { HTTPCodes, DefaultResponses } = require('../Constants');
 
 class Util {
 	static configureWinston(winston) {
@@ -99,6 +100,19 @@ class Util {
 		}
 
 		return response;
+	}
+
+	static getDefaultErrorHandler() {
+		return (error, req, res) => {
+			try {
+				winston.error(error);
+			} catch (e) {
+				// Ignore
+			}
+
+			const response = Util.getResponse(HTTPCodes.INTERNAL_SERVER_ERROR);
+			res.status(response.status).json(response);
+		};
 	}
 }
 

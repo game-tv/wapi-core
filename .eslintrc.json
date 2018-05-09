@@ -28,6 +28,18 @@
 		],
 		"no-var": [
 			"error"
+		],
+		"max-statements": [
+			"warn",
+			25
+		],
+		"max-len": [
+			"warn",
+			{
+				"code": 140,
+				"tabWidth": 4,
+				"ignoreUrls": true
+			}
 		]
 	}
 }
