@@ -3,31 +3,9 @@
 const { Router: ExpressRouter } = require('express');
 const winston = require('winston');
 
-const { HTTPCodes, DefaultResponses } = require('../Constants');
+const { HTTPCodes } = require('../Constants');
 const Route = require('./Route');
 const Util = require('../utils/Util');
-
-const handleResponse = (res, response) => {
-	// If there is no response set we assume the endpoint responds on its own
-	if (response == null) {
-		return;
-	}
-	// If it's a number we create a default response for the code
-	if (typeof response === 'number') {
-		return res.status(response).json({ status: response, message: DefaultResponses[response] });
-	}
-
-	// Add response status if not present
-	if (!response.status) {
-		response.status = HTTPCodes.OK;
-	}
-	// There must be a message when the code is not 200
-	if (response.status !== HTTPCodes.OK && !response.message) {
-		response.message = DefaultResponses[response.status];
-	}
-
-	res.status(response.status).json(response);
-};
 
 class Router {
 	/**
@@ -50,7 +28,8 @@ class Router {
 					// Ignore
 				}
 
-				handleResponse(res, HTTPCodes.INTERNAL_SERVER_ERROR);
+				const response = Util.getResponse(HTTPCodes.INTERNAL_SERVER_ERROR);
+				res.status(response.status).json(response);
 			};
 		}
 
@@ -68,7 +47,11 @@ class Router {
 					}
 
 					// Forward call and handle its response
-					handleResponse(res, await route.call(req, res, alias));
+					const routeRes = await route.call(req, res, alias);
+					if (routeRes) {
+						const response = Util.getResponse(routeRes);
+						res.status(response.status).json(response);
+					}
 				} catch (e) {
 					errorHandler(e, req, res);
 				}

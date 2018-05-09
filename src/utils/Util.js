@@ -1,5 +1,7 @@
 'use strict';
 
+const { Constants: { HTTPCodes, DefaultResponses } } = require('../Constants');
+
 class Util {
 	static configureWinston(winston) {
 		winston.configure({
@@ -75,6 +77,28 @@ class Util {
 		}
 
 		return false;
+	}
+
+	static getResponse(response) {
+		// If there is no response set we assume we should continue
+		if (response == null) {
+			return { status: HTTPCodes.OK, message: DefaultResponses[HTTPCodes.OK] };
+		}
+		// If it's a number we create a default response for the code
+		if (typeof response === 'number') {
+			return { status: response, message: DefaultResponses[response] };
+		}
+
+		// Add response status if not present
+		if (!response.status) {
+			response.status = HTTPCodes.OK;
+		}
+		// There must be a message when the code is not 200
+		if (response.status !== HTTPCodes.OK && !response.message) {
+			response.message = DefaultResponses[response.status];
+		}
+
+		return response;
 	}
 }
 

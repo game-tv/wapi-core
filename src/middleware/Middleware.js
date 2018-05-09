@@ -1,31 +1,10 @@
 'use strict';
 
 const winston = require('winston');
-
-const { HTTPCodes, DefaultResponses } = require('../Constants');
 const UrlPattern = require('url-pattern');
 
-const getResponse = response => {
-	// If there is no response set we assume we should continue
-	if (response == null) {
-		return { status: HTTPCodes.OK, message: DefaultResponses[HTTPCodes.OK] };
-	}
-	// If it's a number we create a default response for the code
-	if (typeof response === 'number') {
-		return { status: response, message: DefaultResponses[response] };
-	}
-
-	// Add response status if not present
-	if (!response.status) {
-		response.status = HTTPCodes.OK;
-	}
-	// There must be a message when the code is not 200
-	if (response.status !== HTTPCodes.OK && !response.message) {
-		response.message = DefaultResponses[response.status];
-	}
-
-	return response;
-};
+const { HTTPCodes } = require('../Constants');
+const Util = require('../utils/Util');
 
 class Middleware {
 	/**
@@ -49,7 +28,7 @@ class Middleware {
 					// Ignore
 				}
 
-				const response = getResponse(res, HTTPCodes.INTERNAL_SERVER_ERROR);
+				const response = Util.getResponse(HTTPCodes.INTERNAL_SERVER_ERROR);
 				res.status(response.status).json(response);
 			};
 		}
@@ -65,7 +44,7 @@ class Middleware {
 					}
 				}
 
-				const response = getResponse(await this.exec(req, res));
+				const response = Util.getResponse(await this.exec(req, res));
 				if (response.status === HTTPCodes.OK) {
 					return next();
 				}
