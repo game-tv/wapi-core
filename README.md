@@ -48,6 +48,8 @@ new YourAPI().init();
 	"env": "development",
 	"sentry": "",
 	"track": "",
+	"redis": "",
+	"mongodb": "",
 	"registration": {
 		"enabled": false,
 		"host": "",
@@ -76,6 +78,7 @@ const {
 	Constants,
 	FileCache,
 	Middleware,
+	Redis,
 	Require,
 	Route,
 	Router,
