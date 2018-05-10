@@ -50,7 +50,7 @@ class Redis {
 	_registerEvents() {
 		this._conn.on('ready', () => {
 			this._connected = true;
-			winston.info(`Redis ready on ${this.host}:${this.port}`);
+			winston.info(`Redis on ${this.host}:${this.port} ready`);
 		});
 		this._conn.on('error', e => {
 			this._connected = false;
@@ -62,8 +62,12 @@ class Redis {
 		});
 		this._conn.on('end', () => {
 			this._connected = false;
-			winston.warn(`Redis connection to ${this.host}:${this.port} was closed`);
+			winston.info(`Redis connection to ${this.host}:${this.port} was closed`);
 		});
+	}
+
+	close() {
+		return this._conn.quit();
 	}
 
 	multi() {

@@ -20,6 +20,13 @@ const WildcardRouter = require('./router/WildcardRouter');
 const Redis = require('./utils/Redis');
 const { HTTPCodes } = require('./Constants');
 
+let mongoose;
+try {
+	mongoose = require('mongoose');
+} catch (e) {
+	// Ignore
+}
+
 class WeebAPI {
 	/**
 	 * Creates a new WeebAPI
@@ -38,7 +45,6 @@ class WeebAPI {
 
 		this._registrator = null;
 		this._server = null;
-		this._mongoose = null;
 		this._redis = null;
 		this._sentry = null;
 	}
@@ -51,6 +57,9 @@ class WeebAPI {
 		// Register error hooks
 		process.on('SIGTERM', () => this.shutdown());
 		process.on('SIGINT', () => this.shutdown());
+		process.on('exit', () => {
+			winston.info('Goodbye');
+		});
 		process.on('unhandledRejection', (reason, promise) => {
 			winston.error(util.inspect(promise, { depth: 4 }));
 		});
@@ -60,12 +69,7 @@ class WeebAPI {
 			await this._loadConfig();
 			await this.onLoaded();
 
-			this._sentry = new Sentry(this);
-			this._registrator = new Registrator(this);
-			if (this.get('redis') && this.get('redis') !== '') {
-				this._redis = new Redis(this.get('redis'));
-			}
-
+			await this._startServices();
 			await this._startExpress();
 
 			await this._registrator.register();
@@ -170,40 +174,63 @@ class WeebAPI {
 		return this._redis;
 	}
 
-	shutdown(errors) {
-		errors = errors || [];
+	async shutdown() {
+		const errors = [];
 
-		if (this._registrator && this.get('serviceName')) {
-			return this._registrator.unregister(this.get('serviceName'))
-				.then(() => {
-					this._registrator = null;
-					this.shutdown(errors);
-				}).catch(e => {
-					this._registrator = null;
-					this.errors.push(e);
-					this.shutdown(errors);
-				});
+		if (this._registrator.enabled && this.get('serviceName')) {
+			try {
+				await this._registrator.unregister(this.get('serviceName'));
+			} catch (e) {
+				errors.push(e);
+			}
+			this._registrator = null;
+			winston.info('Unregistered service');
 		}
 		if (this._server) {
-			return new GracefulShutdownManager(this._server).terminate(() => {
-				this._server = null;
-				this.shutdown(errors);
+			await new Promise(resolve => {
+				new GracefulShutdownManager(this._server).terminate(resolve);
 			});
+			this._server = null;
+			winston.info('Closed Express server');
 		}
-		if (this._mongoose) {
-			return this._mongoose.connection.close(() => {
-				this._mongoose = null;
-				this.shutdown(errors);
-			});
+		if (mongoose && this.get('mongodb') && this.get('mongodb') !== '') {
+			await mongoose.disconnect();
+			winston.info('Closed MongoDB connection');
+		}
+		if (this._redis) {
+			this._redis.close();
+			this._redis = null;
 		}
 
 		if (errors.length > 0) {
-			for (const error of this.errors) {
+			for (const error of errors) {
 				winston.error(error);
 			}
-			process.exit(1);
+			setTimeout(() => {
+				process.exit(1);
+			}, 1000);
 		} else {
-			process.exit(0);
+			setTimeout(() => {
+				process.exit(0);
+			}, 1000);
+		}
+	}
+
+	async _startServices() {
+		this._sentry = new Sentry(this);
+		this._registrator = new Registrator(this);
+
+		if (this.get('redis') && this.get('redis') !== '') {
+			this._redis = new Redis(this.get('redis'));
+		}
+
+		if (this.get('mongodb') && this.get('mongodb') !== '') {
+			if (!mongoose) {
+				throw new Error('Cannot start mongoose because it\'s missing from the dependencies');
+			}
+
+			await mongoose.connect(this.get('mongodb'));
+			winston.info('MongoDB connected');
 		}
 	}
 
