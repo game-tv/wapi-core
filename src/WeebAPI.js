@@ -226,7 +226,7 @@ class WeebAPI {
 
 		if (this.get('mongodb') && this.get('mongodb') !== '') {
 			if (!mongoose) {
-				throw new Error('Cannot start mongoose because it\'s missing from the dependencies');
+				throw new Error('Mongoose is not installed');
 			}
 
 			await mongoose.connect(this.get('mongodb'));
