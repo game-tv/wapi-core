@@ -84,10 +84,10 @@ class Router {
 		return async (req, res) => {
 			try {
 				// Permission check and abort if no perms
-				if (req.weebApi.enableAccounts && !Util.checkPermissions(req.account, route.permissions, route.requireAccount)) {
+				if (req.weeb.enableAccounts && !Util.checkPermissions(req.account, route.permissions, route.requireAccount)) {
 					return res.status(HTTPCodes.FORBIDDEN).json({ status: HTTPCodes.FORBIDDEN, message: Util.buildMissingScopeMessage(
-						req.weebApi.get('name') || 'unset',
-						req.weebApi.get('env') || 'unset',
+						req.weeb.get('name') || 'unset',
+						req.weeb.get('env') || 'unset',
 						route.permissions,
 					) });
 				}

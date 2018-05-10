@@ -7,13 +7,15 @@ class Util {
 	static configureWinston(winston) {
 		winston.configure({
 			transports: [
-				new winston.transports.Console(),
+				new winston.transports.Console({
+					// If global.it is present this means we're running in a mocha test
+					silent: typeof global.it === 'function',
+				}),
 			],
 			format: winston.format.combine(
 				winston.format.colorize(),
 				winston.format.timestamp(),
-				winston.format.align(),
-				winston.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`),
+				winston.format.printf(info => `${info.timestamp} ${info.level.padEnd(16)}: ${info.message}`),
 			),
 		});
 	}

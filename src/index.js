@@ -7,6 +7,7 @@ module.exports = {
 	Constants: require('./Constants'),
 	FileCache: require('./utils/FileCache'),
 	Middleware: require('./middleware/Middleware'),
+	Redis: require('./utils/Redis'),
 	Require: require('./utils/Require'),
 	Route: require('./router/Route'),
 	Router: require('./router/Router'),

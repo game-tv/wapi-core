@@ -17,6 +17,7 @@ const TrackMiddleware = require('./middleware/TrackMiddleware');
 const ServiceRouter = require('./router/ServiceRouter');
 const Sentry = require('./utils/Sentry');
 const WildcardRouter = require('./router/WildcardRouter');
+const Redis = require('./utils/Redis');
 const { HTTPCodes } = require('./Constants');
 
 class WeebAPI {
@@ -38,6 +39,7 @@ class WeebAPI {
 		this._registrator = null;
 		this._server = null;
 		this._mongoose = null;
+		this._redis = null;
 		this._sentry = null;
 	}
 
@@ -60,6 +62,9 @@ class WeebAPI {
 
 			this._sentry = new Sentry(this);
 			this._registrator = new Registrator(this);
+			if (this.get('redis') && this.get('redis') !== '') {
+				this._redis = new Redis(this.get('redis'));
+			}
 
 			await this._startExpress();
 
@@ -157,6 +162,14 @@ class WeebAPI {
 		return this._config.enableAccounts;
 	}
 
+	get sentry() {
+		return this._sentry;
+	}
+
+	get redis() {
+		return this._redis;
+	}
+
 	shutdown(errors) {
 		errors = errors || [];
 
@@ -205,7 +218,7 @@ class WeebAPI {
 
 		// Config middleware
 		app.use((req, res, next) => {
-			req.weebApi = this;
+			req.weeb = this;
 			Object.defineProperty(req, 'Raven', {
 				get: () => {
 					winston.warn('Using req.Raven is deprecated and will be removed in the future! Use req.sentry instead.');
@@ -213,6 +226,7 @@ class WeebAPI {
 				},
 			});
 			req.sentry = this._sentry;
+			req.redis = this._redis;
 			next();
 		});
 
@@ -284,6 +298,8 @@ class WeebAPI {
 		data.set('env', config.env || 'development');
 		// TODO Remove config.ravenKey in the future
 		data.set('sentry', config.sentry || config.ravenKey || null);
+		data.set('redis', config.redis || null);
+		data.set('mongodb', config.mongodb || null);
 		data.set('track', config.track || null);
 		data.set('irohHost', config.irohHost || 'http://localhost:9010');
 		data.set('registration', config.registration || {});
