@@ -34,6 +34,10 @@ class Sentry {
 	}
 
 	captureException(...args) {
+		if (!this._enabled) {
+			return;
+		}
+
 		this._raven.captureException(...args);
 	}
 }
