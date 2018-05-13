@@ -24,7 +24,7 @@ class Registrator {
 		this.agent = axios.create({ baseURL: `http://${weebApi.get('registration').host}/v1/`, headers });
 		this.id = shortid.generate();
 
-		this.enabled = true;
+		this._enabled = true;
 	}
 
 	get enabled() {
