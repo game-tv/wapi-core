@@ -31,9 +31,9 @@ class AccountAPIMiddlewareTest extends BaseTest {
         app.use('*', (req, res) => res.status(200).json({ status: 200, message: 'Authorized', account: req.account }))
         const server = app.listen(12011, 'localhost', () => {
           axios({
-            url: `http://localhost:12011`,
+            url: 'http://localhost:12011',
             method: 'get',
-            headers: {Authorization: `Bearer ${token}`}
+            headers: { Authorization: `Bearer ${token}` }
           })
             .then(response => {
               apiServer.close()
